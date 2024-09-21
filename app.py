@@ -1,5 +1,4 @@
 import os
-
 import requests
 import streamlit as st
 from langchain.schema import HumanMessage, SystemMessage
@@ -12,10 +11,12 @@ client = ChatOpenAI(model="gpt-3.5-turbo")
 
 # Define data models
 class Task(BaseModel):
+    """Model representing a task."""
     task: str
 
 
 class UserStory(BaseModel):
+    """Model representing a user story."""
     title: str
     description: str
     implementation_suggestion: str
@@ -23,11 +24,12 @@ class UserStory(BaseModel):
 
 
 class UserStoriesResponse(BaseModel):
+    """Model representing a response containing user stories."""
     user_stories: list[UserStory]
 
 
-# Function to create the prompt
-def create_prompt(project_idea, tech_stack):
+def create_prompt(project_idea: str, tech_stack: str) -> str:
+    """Creates a prompt for generating user stories based on project idea and tech stack."""
     return (
         f"Based on the project idea: '{project_idea}', and using the tech stack: {tech_stack}, "
         "please provide 3 unique Agile user stories in JSON format with the following structure:\n"
@@ -49,8 +51,8 @@ def create_prompt(project_idea, tech_stack):
     )
 
 
-# Function to generate user stories using OpenAI
-def generate_tasks(project_idea, tech_stack):
+def generate_tasks(project_idea: str, tech_stack: str) -> str:
+    """Generates tasks using OpenAI based on the provided project idea and tech stack."""
     prompt = create_prompt(project_idea, tech_stack)
     messages = [
         SystemMessage(content="You are an experienced Project Manager and Agile coach tasked with generating user "
@@ -61,29 +63,30 @@ def generate_tasks(project_idea, tech_stack):
     return response.content
 
 
-# Function to create a GitHub issue
-def create_github_issue(repo, title, body, token):
+def create_github_issue(repo: str, title: str, body: str, token: str) -> dict:
+    """Creates a GitHub issue with the specified title and body."""
     url = f"https://api.github.com/repos/{repo}/issues"
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json"
     }
     issue = {"title": title, "body": body}
-    response = requests.post(url, json=issue, headers=headers).json()
+    response = requests.post(url, json=issue, headers=headers)
+
     if response.status_code == 201:
         return response.json()
     else:
         raise Exception(f"GitHub API error: {response.status_code} - {response.json().get('message', 'Unknown error')}")
 
 
-# Function to clean and parse the generated output
-def parse_generated_output(generated_output):
+def parse_generated_output(generated_output: str) -> UserStoriesResponse:
+    """Cleans and parses the generated output into UserStoriesResponse."""
     cleaned_output = generated_output.split('```json')[-1].strip('` \n')
     return UserStoriesResponse.parse_raw(cleaned_output)
 
 
-# Function to format the issue body from user story
-def format_issue_body(story):
+def format_issue_body(story: UserStory) -> str:
+    """Formats the issue body from a user story."""
     tasks = "\n".join(f"- {task.task}" for task in story.tasks)
     return (
         f"**Description:** {story.description.strip()}\n\n"
