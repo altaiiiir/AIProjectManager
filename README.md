@@ -27,6 +27,7 @@ The AI Project Manager is a Streamlit application designed to generate Agile use
 - A GitHub account
 - A GitHub repository where issues will be created
 - A GitHub personal access token with repo permissions
+- An OpenAI account with an access token
 
 ### Installation
 
@@ -37,7 +38,7 @@ The AI Project Manager is a Streamlit application designed to generate Agile use
 2. Setup your Github and OpenAI API Keys:
    ```bash
    export GITHUB_API_KEY='your_personal_access_token'
-   export OPENAI_API_KEY
+   export OPENAI_API_KEY='your_personal_access_token'
 3. Install required packages:
    ```bash
    pip install -r requirements.txt
@@ -46,6 +47,6 @@ The AI Project Manager is a Streamlit application designed to generate Agile use
    ./run_streamlit.py
    
 ### Notes:
-- Replace `"yourusername"` in the clone URL with your actual GitHub username.
+- Replace `repo` in the code with your username and repo you want to create issues in. For example: `repo = "altaiiiir/test"`
 - Update the contact email at the end.
 - You can modify any sections to better fit your project or add additional details as needed.
