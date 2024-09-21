@@ -2,10 +2,9 @@ import os
 
 import requests
 import streamlit as st
-from pydantic import BaseModel
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel
 
 # Initialize OpenAI client
 client = ChatOpenAI(model="gpt-3.5-turbo")
@@ -70,7 +69,11 @@ def create_github_issue(repo, title, body, token):
         "Accept": "application/vnd.github.v3+json"
     }
     issue = {"title": title, "body": body}
-    return requests.post(url, json=issue, headers=headers).json()
+    response = requests.post(url, json=issue, headers=headers).json()
+    if response.status_code == 201:
+        return response.json()
+    else:
+        raise Exception(f"GitHub API error: {response.status_code} - {response.json().get('message', 'Unknown error')}")
 
 
 # Function to clean and parse the generated output
@@ -97,7 +100,9 @@ st.write("Enter your project details below:")
 project_idea = st.text_input("Project Idea")
 tech_stack = st.text_input("Tech Stack (e.g., Python, AWS, GitHub)")
 repo = "altaiiiir/test"
-token = os.environ["GITHUB_API_KEY"]
+token = os.environ.get("GITHUB_API_KEY")
+if not token:
+    st.error("GitHub API key not found in environment variables.")
 
 # Generate button
 if st.button("Generate and Upload"):
