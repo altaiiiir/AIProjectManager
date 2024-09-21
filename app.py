@@ -1,11 +1,14 @@
 import os
 
-import streamlit as st
 import requests
+import streamlit as st
 from pydantic import BaseModel
-from openai import OpenAI
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage, SystemMessage
 
-client = OpenAI()
+# Initialize OpenAI client
+client = ChatOpenAI(model="gpt-3.5-turbo")
 
 
 # Define data models
@@ -24,25 +27,7 @@ class UserStoriesResponse(BaseModel):
     user_stories: list[UserStory]
 
 
-# Function to generate user stories using OpenAI
-def generate_tasks(project_idea, tech_stack):
-    prompt = create_prompt(project_idea, tech_stack)
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are an experienced Agile coach tasked with generating user stories."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=500,
-        temperature=0.7,
-        top_p=1.0,
-        n=1,
-        stop=None
-    )
-    return response.choices[0].message.content
-
-
-# Helper function to create the prompt
+# Function to create the prompt
 def create_prompt(project_idea, tech_stack):
     return (
         f"Based on the project idea: '{project_idea}', and using the tech stack: {tech_stack}, "
@@ -63,6 +48,18 @@ def create_prompt(project_idea, tech_stack):
         "**Ensure the JSON is valid and properly formatted.**\n\n"
         "Start generating the user stories now:"
     )
+
+
+# Function to generate user stories using OpenAI
+def generate_tasks(project_idea, tech_stack):
+    prompt = create_prompt(project_idea, tech_stack)
+    messages = [
+        SystemMessage(content="You are an experienced Project Manager and Agile coach tasked with generating user "
+                              "stories."),
+        HumanMessage(content=prompt)
+    ]
+    response = client(messages)
+    return response.content
 
 
 # Function to create a GitHub issue
@@ -108,7 +105,6 @@ if st.button("Generate and Upload"):
         with st.spinner("Generating stories and tasks..."):
             generated_output = generate_tasks(project_idea, tech_stack)
             st.success("Generation Complete!")
-            #st.write("Raw Output:", generated_output)  # Debugging line
 
             # Parse the JSON response
             try:
