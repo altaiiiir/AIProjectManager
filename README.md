@@ -48,5 +48,4 @@ The AI Project Manager is a Streamlit application designed to generate Agile use
    
 ### Notes:
 - Replace `repo` in the code with your username and repo you want to create issues in. For example: `repo = "example_user_name/example_repo"`
-- Update the contact email at the end.
 - You can modify any sections to better fit your project or add additional details as needed.
