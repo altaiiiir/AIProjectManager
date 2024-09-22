@@ -31,22 +31,26 @@ class UserStoriesResponse(BaseModel):
 def create_prompt(project_idea: str, tech_stack: str) -> str:
     """Creates a prompt for generating user stories based on project idea and tech stack."""
     return (
-        f"Based on the project idea: '{project_idea}', and using the tech stack: {tech_stack}, "
-        "please provide 3 unique Agile user stories in JSON format with the following structure:\n"
+        f"Based on the project idea: '{project_idea}', and using any/all technologies/frameworks included within the tech stack: {tech_stack}, "
+        "please provide unique Agile user stories for each component of the project, ensuring that each user story is broken down into manageable tasks that are small, specific, and suitable for individual GitHub issues."
+        "If the tech stack includes a broad platform or service (like AWS, Azure, GCP), consider the appropriate services (e.g., AWS Lambda, Step Functions, Bedrock, etc.), Python libraries, or frameworks that align with the project’s context and best practices without explicitly forcing their use."
+        "Where applicable, naturally incorporate relevant cloud services, libraries, or frameworks that would help accomplish the task efficiently."
+        "If a task contains multiple actions or steps, further break it down into sub-tasks with detailed explanations."
+        "The output should be in JSON format with the following structure:\n"
         "{\n"
         '  "user_stories": [\n'
         '    {\n'
-        '      "title": "[Title of the user story]",\n'
-        '      "description": "Given [context], when [event], then [outcome].",\n'
-        '      "implementation_suggestion": "[How this could be implemented]",\n'
+        '      "title": "[Title of the user story, must be descriptive and concise. Must not start with As a user, ]",\n'
+        '      "description": "GIVEN [context]. WHEN[event].THEN [outcome].",\n'
+        '      "implementation_suggestion": "[How this could be implemented, considering relevant services and libraries without explicitly dictating them]",\n'
         '      "tasks": [\n'
-        '        {"task": "[Task 1]"},\n'
-        '        {"task": "[Task 2]"}\n'
+        '        {"task": "[Detailed numbered steps using markdown, ensuring each task is granular and focused on a single action]"},\n'
+        '        {"task": "[Task 2 with additional breakdowns if necessary, implicitly considering relevant services]"}\n'
         '      ]\n'
         '    }\n'
         '  ]\n'
         "}\n\n"
-        "**Ensure the JSON is valid and properly formatted.**\n\n"
+        "**Ensure the JSON is valid and properly formatted. Each task should be specific enough to be a GitHub issue. Break down tasks into smaller sub-tasks if necessary, and naturally incorporate relevant services and libraries where applicable.**\n\n"
         "Start generating the user stories now:"
     )
 
@@ -73,10 +77,9 @@ def create_github_issue(repo: str, title: str, body: str, token: str) -> dict:
     issue = {"title": title, "body": body}
     response = requests.post(url, json=issue, headers=headers)
 
-    if response.status_code == 201:
-        return response.json()
-    else:
+    if response.status_code != 201:
         raise Exception(f"GitHub API error: {response.status_code} - {response.json().get('message', 'Unknown error')}")
+    return response.json()
 
 
 def parse_generated_output(generated_output: str) -> UserStoriesResponse:
@@ -102,9 +105,9 @@ st.write("Enter your project details below:")
 # Input fields for project idea and tech stack
 project_idea = st.text_input("Project Idea")
 tech_stack = st.text_input("Tech Stack (e.g., Python, AWS, GitHub)")
-repo = "altaiiiir/test"
-token = os.environ.get("GITHUB_API_KEY")
-if not token:
+REPO = "altaiiiir/test"
+GITHUB_TOKEN = os.environ.get("GITHUB_API_KEY")
+if not GITHUB_TOKEN:
     st.error("GitHub API key not found in environment variables.")
 
 # Generate button
@@ -122,7 +125,7 @@ if st.button("Generate and Upload"):
                     body = format_issue_body(story)
 
                     # Create GitHub issue
-                    create_response = create_github_issue(repo, title, body, token)
+                    create_response = create_github_issue(REPO, title, body, GITHUB_TOKEN)
                     if 'id' in create_response:
                         st.success(f"Issue created: {create_response['html_url']}")
                     else:
